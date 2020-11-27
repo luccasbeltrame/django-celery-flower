@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-worker
+spec:
+  selector:
+    matchLabels:
+      app: django-worker
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: django-worker
+        version: v1
+    spec:
+      containers:
+      - image: django-celery-flower
+        command: ["celery" , "-A" , "djangocelery" , "worker", "-l" , "info"]
+        imagePullPolicy: IfNotPresent
+        name: django-worker
+        envFrom:
+        - configMapRef:
+            name: envs-django-web
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler     

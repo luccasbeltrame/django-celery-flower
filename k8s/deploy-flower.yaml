@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-flower
+  labels:
+    app: django-flower
+spec:
+  ports:
+    - name: http
+      port: 5555
+      targetPort: 5555
+  selector:
+    app: django-flower
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-flower
+spec:
+  selector:
+    matchLabels:
+      app: django-flower
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: django-flower
+        version: v1
+    spec:
+      containers:
+      - image: django-celery-flower
+        command: ["celery" , "-A" , "djangocelery" , "flower" , "--broker=amqp://"]
+        imagePullPolicy: IfNotPresent
+        name: django-flower
+        ports:
+        - containerPort: 5555
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler

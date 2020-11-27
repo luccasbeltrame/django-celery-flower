@@ -1,0 +1,44 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-web
+  labels:
+    app: django-web
+spec:
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+  selector:
+    app: django-web
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-web
+spec:
+  selector:
+    matchLabels:
+      app: django-web
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: django-web
+        version: v1
+    spec:
+      containers:
+      - image: django-celery-flower
+        command: ["python" , "manage.py" , "runserver" , "0.0.0.0:8000"]
+        imagePullPolicy: IfNotPresent
+        name: django-web
+        envFrom:
+        - configMapRef:
+            name: envs-django-web
+        ports:
+        - containerPort: 8000
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
