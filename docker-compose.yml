@@ -1,0 +1,36 @@
+rabbit:
+  image: rabbitmq:3-management
+  environment:
+    - RABBITMQ_DEFAULT_USER=guest
+    - RABBITMQ_DEFAULT_PASSWORD=guest
+  ports:
+    - "8080:15672"
+   
+
+web:
+  build: .
+  command: python manage.py runserver 0.0.0.0:8000
+  ports:
+    - "8000:8000"
+  environment:
+    - CELERY_BROKER_URL=amqp://guest:guest@rabbit    
+  links:
+    - worker
+    - rabbit
+    
+worker:
+  build: .
+  environment:
+    - CELERY_BROKER_URL=amqp://guest:guest@rabbit
+  command: celery -A djangocelery worker -l info
+  links:
+    - rabbit
+
+flower:
+  build: .
+  command: celery -A djangocelery flower --broker=amqp://guest:guest@rabbit
+  ports:
+    - "5555:5555"     
+  links:
+    - rabbit
+    - worker   
